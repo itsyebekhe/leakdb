@@ -445,12 +445,12 @@
                 const ncData = processNationalCode(rawCode); 
                 const cityBadge = ncData.city ? `<span class="mr-1 text-[10px] bg-slate-700 px-1.5 rounded text-slate-300 border border-slate-600">${ncData.city}</span>` : '';
 
-                // 1. Desktop Row
+                // 1. Desktop Row 
                 tbody.innerHTML += `
                 <tr class="hover:bg-slate-700/30 transition-colors border-b border-slate-700/50 last:border-0">
                     <td class="px-4 py-4 text-right font-bold text-white whitespace-normal min-w-[140px]" dir="rtl">${rName}</td>
                     <td class="px-4 py-4 text-center" dir="ltr">
-                        <div class="font-mono text-slate-300 tracking-wider select-all" title="${isRevealed ? '' : 'Alt+M to Reveal'}">${displayCode}</div>
+                        <div class="font-mono text-slate-300 tracking-wider select-all" title="${isRevealed ? '' : 'Hold me hard :)'}">${displayCode}</div>
                         ${cityBadge ? `<div dir="rtl" class="inline-block mt-1">${cityBadge}</div>` : ''}
                     </td>
                     <td class="px-4 py-4 text-center font-mono text-slate-300 tracking-wider select-all" dir="ltr" title="${isRevealed ? '' : 'Alt+M to Reveal'}">${displayMob}</td>
