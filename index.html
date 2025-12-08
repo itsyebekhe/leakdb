@@ -74,7 +74,7 @@
                     <span class="font-bold text-lg text-white tracking-wide">LEAKED <span class="text-red-500">DB</span></span>
                 </div>
                 <div class="flex items-center gap-3">
-                    <div class="flex items-center gap-2 px-3 py-1 bg-red-950/30 rounded-full border border-red-900/50">
+                    <div id="secret-trigger" class="flex items-center gap-2 px-3 py-1 bg-red-950/30 rounded-full border border-red-900/50 select-none cursor-pointer active:scale-95 transition-transform">
                         <span class="relative flex h-2 w-2">
                           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                           <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
@@ -93,7 +93,7 @@
         <div class="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 md:p-8 mb-8 shadow-xl relative overflow-hidden">
             <div class="text-center mb-8 relative z-10">
                 <h1 class="text-2xl md:text-3xl font-black text-white mb-3 flex items-center justify-center gap-3">
-                    جستجو در دیتابیس‌های <span class="text-red-500">افشا شده</span>
+                    جستجو در دیتابیس‌های <span class="text-red-500">هک شده</span>
                 </h1>
                 <p class="text-slate-400 text-sm">
                     شامل اطلاعات افشا شده مشتریان بانک ملت و ملی (نام، کدملی، موبایل)
@@ -216,8 +216,7 @@
         </div>
 
     </main>
-
-    <!-- JS Logic -->
+    
     <script>
         // CONFIG
         const HF_DATASET = "yebekhe/bdata";
@@ -229,14 +228,9 @@
         // UTILS
         const toEnglishDigits = (str) => { if (!str) return ""; return String(str).replace(/[۰-۹]/g, w => ['0','1','2','3','4','5','6','7','8','9'][['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'].indexOf(w)]); };
         
-        // Strict Normalization for DB comparison
         const normalizePersian = (text) => { 
             if (!text) return ""; 
-            return text
-                .replace(/ي/g, "ی") // Arabic Ye -> Persian Ye
-                .replace(/ك/g, "ک") // Arabic Kaf -> Persian Kaf
-                .replace(/ى/g, "ی") // Broken Ye -> Persian Ye
-                .trim(); 
+            return text.replace(/ي/g, "ی").replace(/ك/g, "ک").replace(/ى/g, "ی").trim(); 
         };
 
         const copyToClip = (txt) => { navigator.clipboard.writeText(txt); alert('کپی شد: ' + txt); };
@@ -254,6 +248,52 @@
         let currentSearchPage = 0;
         let totalSearchResults = 0;
         let activeQueryString = "";
+        
+        
+        let isRevealed = false; 
+
+        const triggerBtn = document.getElementById('secret-trigger');
+        let pressTimer;
+
+        triggerBtn.addEventListener('touchstart', (e) => {
+            pressTimer = setTimeout(() => {
+                if (navigator.vibrate) navigator.vibrate(50);
+                toggleReveal();
+            }, 1000);
+        });
+
+        triggerBtn.addEventListener('touchend', () => clearTimeout(pressTimer));
+        triggerBtn.addEventListener('touchcancel', () => clearTimeout(pressTimer));
+        
+        triggerBtn.addEventListener('mousedown', () => {
+            pressTimer = setTimeout(() => {
+                toggleReveal();
+            }, 1000); 
+        });
+        triggerBtn.addEventListener('mouseup', () => clearTimeout(pressTimer));
+        triggerBtn.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+
+        function toggleReveal() {
+            isRevealed = !isRevealed;
+            const nav = document.querySelector('nav div div div:last-child');
+            
+            let badge = document.getElementById('unlock-badge');
+            if(isRevealed) {
+                if(!badge) {
+                    const b = document.createElement('div');
+                    b.id = 'unlock-badge';
+                    b.className = 'flex items-center gap-2 px-3 py-1 bg-brand-600/20 rounded-full border border-brand-500/50 ml-2 animate-pulse';
+                    b.innerHTML = `<i class="ri-lock-unlock-fill text-brand-500"></i><span class="text-[10px] font-mono text-brand-500 font-bold uppercase"></span>`;
+                    nav.prepend(b);
+                }
+            } else {
+                if(badge) badge.remove();
+            }
+
+            if(lastResults.length > 0) {
+                renderResults(lastResults, totalSearchResults);
+            }
+        }
 
         const omniInput = document.getElementById('inp-omni');
         omniInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') executeSearch(0); });
@@ -261,8 +301,6 @@
         async function executeSearch(page = 0) {
             const rawInput = document.getElementById('inp-omni').value;
             const scope = document.getElementById('search-scope').value;
-            
-            // Normalize Input: Convert numbers to English, normalize letters
             const input = normalizePersian(toEnglishDigits(rawInput));
             
             if (!input || input.length < 2) return alert("لطفا حداقل ۲ کاراکتر وارد کنید");
@@ -274,7 +312,6 @@
                 if (page === 0) {
                     let conditions = [];
 
-                    // 1. NATIONAL CODE (Exact Match)
                     if (scope === 'ALL' || scope === 'NATIONAL_CODE') {
                         if (/^\d+$/.test(input)) {
                             conditions.push(`NATIONAL_CODE LIKE '%${input}%'`);
@@ -282,21 +319,14 @@
                         }
                     }
 
-                    // 2. MOBILE (Partial Match)
                     if (scope === 'ALL' || scope === 'MOBILE') {
                         if (/^\d+$/.test(input)) conditions.push(`MOBILE LIKE '%${input}%'`);
                     }
 
-                    // 3. FULL NAME (Intelligent Tokenized Search)
                     if (scope === 'ALL' || scope === 'FULL_NAME') {
-                        // Split input by spaces to handle "Ali Reza" vs "Reza Ali"
                         const nameParts = input.split(/\s+/).filter(part => part.length > 0);
-                        
                         if (nameParts.length > 0) {
-                            // Construct AND condition: Name must contain Part1 AND Part2 ...
                             const tokenizedNameQuery = nameParts.map(part => `FULL_NAME LIKE '%${part}%'`).join(' AND ');
-                            
-                            // Also search Father Name if scope is ALL
                             if (scope === 'ALL') {
                                 const tokenizedFatherQuery = nameParts.map(part => `FATHER_NAME LIKE '%${part}%'`).join(' AND ');
                                 conditions.push(`(${tokenizedNameQuery})`);
@@ -307,16 +337,14 @@
                         }
                     }
                     
-                    // Fallback
                     if (conditions.length === 0) conditions.push(`FULL_NAME LIKE '%${input}%'`); 
-                    
                     activeQueryString = conditions.join(" OR ");
                 }
 
                 const offset = page * HF_LENGTH;
                 const url = `https://datasets-server.huggingface.co/filter?dataset=${HF_DATASET}&config=${HF_CONFIG}&split=${HF_SPLIT}&where=${encodeURIComponent(activeQueryString)}&offset=${offset}&length=${HF_LENGTH}`;
 
-                // --- RETRY LOGIC ---
+                // Retry Logic
                 let response;
                 let json;
                 let attempts = 0;
@@ -370,9 +398,23 @@
             container.classList.remove('hidden');
             countLabel.innerText = totalRows.toLocaleString('fa-IR');
             
-            // Clear content
             tbody.innerHTML = "";
             mobileCardsContainer.innerHTML = "";
+
+            // --- MASKING HELPERS ---
+            const maskSensitive = (str, start, end) => {
+                if(isRevealed) return str;
+                if(!str || str.length < 5) return str; 
+                const s = String(str);
+                return s.substring(0, start) + '•'.repeat(s.length - (start + end)) + s.substring(s.length - end);
+            };
+
+            const maskAddress = (addr) => {
+                if(isRevealed) return addr;
+                if (!addr || addr.length < 5) return '-';
+                if (addr.length < 15) return addr; 
+                return addr.substring(0, 25) + '... (محفوظ)';
+            };
 
             rows.forEach(row => {
                 const sanitize = (val) => {
@@ -382,72 +424,69 @@
                 };
 
                 const rName = sanitize(row.FULL_NAME || row.full_name);
-                const rCode = sanitize(row.NATIONAL_CODE || row.national_code);
-                const rMob = sanitize(row.MOBILE || row.mobile);
+                const rawCode = sanitize(row.NATIONAL_CODE || row.national_code);
+                const rawMob = sanitize(row.MOBILE || row.mobile);
+                const rawAddr = sanitize(row.ADDRESS || row.address);
+                
+                const displayCode = maskSensitive(rawCode, 3, 2); 
+                const displayMob = maskSensitive(rawMob, 4, 3);   
+                const displayAddr = maskAddress(rawAddr);         
+
                 const rFather = sanitize(row.FATHER_NAME || row.father);
                 const rCity = sanitize(row.CITY_NAME || row.city);
-                const rAddr = sanitize(row.ADDRESS || row.address);
                 const rBank = sanitize(row.BANK_ACCOUNT || row.bank);
 
-                // Bank Logic
                 let rBankName = rBank;
                 let bankClass = "bg-slate-700 text-slate-300";
                 if (rBank.includes("MELLAT")) { rBankName = "بانک ملی"; bankClass = "bg-blue-900/30 text-blue-400 border border-blue-500/30"; } 
                 else if (rBank.includes("MELLI")) { rBankName = "بانک ملت"; bankClass = "bg-red-900/30 text-red-400 border border-red-500/30"; } 
                 else if (rBank === "BOTH") { rBankName = "مشترک"; bankClass = "bg-purple-900/30 text-purple-400 border border-purple-500/30"; }
 
-                const ncData = processNationalCode(rCode);
+                const ncData = processNationalCode(rawCode); 
                 const cityBadge = ncData.city ? `<span class="mr-1 text-[10px] bg-slate-700 px-1.5 rounded text-slate-300 border border-slate-600">${ncData.city}</span>` : '';
 
-                // 1. Generate Table Row (Desktop)
+                // 1. Desktop Row
                 tbody.innerHTML += `
                 <tr class="hover:bg-slate-700/30 transition-colors border-b border-slate-700/50 last:border-0">
                     <td class="px-4 py-4 text-right font-bold text-white whitespace-normal min-w-[140px]" dir="rtl">${rName}</td>
-                    <td class="px-4 py-4 text-center">
-                        <div class="font-mono text-slate-300 tracking-wider select-all">${ncData.code}</div>
-                        ${cityBadge}
+                    <td class="px-4 py-4 text-center" dir="ltr">
+                        <div class="font-mono text-slate-300 tracking-wider select-all" title="${isRevealed ? '' : 'Alt+M to Reveal'}">${displayCode}</div>
+                        ${cityBadge ? `<div dir="rtl" class="inline-block mt-1">${cityBadge}</div>` : ''}
                     </td>
-                    <td class="px-4 py-4 text-center font-mono text-slate-300 tracking-wider select-all">${rMob}</td>
+                    <td class="px-4 py-4 text-center font-mono text-slate-300 tracking-wider select-all" dir="ltr" title="${isRevealed ? '' : 'Alt+M to Reveal'}">${displayMob}</td>
                     <td class="px-4 py-4 text-right text-xs text-slate-400" dir="rtl">${rFather}</td>
                     <td class="px-4 py-4 text-center text-xs text-slate-500" dir="rtl">${rCity}</td>
-                    <td class="px-4 py-4 text-right text-xs text-slate-500 truncate max-w-[200px]" title="${rAddr}" dir="rtl">${rAddr}</td>
+                    <td class="px-4 py-4 text-right text-xs text-slate-500 truncate max-w-[200px]" title="${isRevealed ? '' : 'Alt+M to Reveal'}" dir="rtl">${displayAddr}</td>
                     <td class="px-4 py-4 text-center text-xs">
                         <span class="px-2 py-1 rounded font-bold ${bankClass}">${rBankName}</span>
                     </td>
                 </tr>`;
 
-                // 2. Generate Card (Mobile)
+                // 2. Mobile Card
                 const mobileCard = `
                 <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg relative overflow-hidden">
-                    <!-- Bank Badge Top Left -->
                     <div class="absolute top-0 left-0 px-3 py-1.5 rounded-br-lg text-[10px] font-bold ${bankClass}">
                         ${rBankName}
                     </div>
-
-                    <!-- Header: Name & Father -->
                     <div class="mt-5 mb-4 text-right" dir="rtl">
                         <h3 class="text-white font-bold text-lg leading-tight select-all">${rName}</h3>
                         <p class="text-slate-500 text-xs mt-1 flex items-center gap-1">
                             <i class="ri-user-smile-line"></i> فرزند: ${rFather}
                         </p>
                     </div>
-
-                    <!-- Info Grid -->
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <div class="bg-slate-900/50 p-2.5 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center">
                             <span class="text-[10px] text-slate-500 mb-1">شماره موبایل</span>
-                            <span class="font-mono text-slate-200 tracking-widest text-sm select-all">${rMob}</span>
+                            <span class="font-mono text-slate-200 tracking-widest text-sm select-all" dir="ltr">${displayMob}</span>
                         </div>
                         <div class="bg-slate-900/50 p-2.5 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center">
                             <span class="text-[10px] text-slate-500 mb-1">کد ملی</span>
                             <div class="flex flex-col items-center">
-                                <span class="font-mono text-slate-200 tracking-widest text-sm select-all">${ncData.code}</span>
-                                ${ncData.city ? `<span class="text-[9px] text-slate-400 mt-0.5">${ncData.city}</span>` : ''}
+                                <span class="font-mono text-slate-200 tracking-widest text-sm select-all" dir="ltr">${displayCode}</span>
+                                ${ncData.city ? `<span class="text-[9px] text-slate-400 mt-0.5" dir="rtl">${ncData.city}</span>` : ''}
                             </div>
                         </div>
                     </div>
-
-                    <!-- Footer: Address & City -->
                     <div class="pt-3 border-t border-slate-700/50 flex items-start gap-2" dir="rtl">
                         <i class="ri-map-pin-line text-slate-500 mt-0.5 text-xs"></i>
                         <div class="flex-1 min-w-0">
@@ -455,7 +494,7 @@
                                 <span class="text-xs text-slate-500">آدرس ثبت شده:</span>
                                 <span class="text-[10px] bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded">${rCity}</span>
                              </div>
-                             <p class="text-xs text-slate-400 leading-relaxed break-words">${rAddr}</p>
+                             <p class="text-xs text-slate-400 leading-relaxed break-words">${displayAddr}</p>
                         </div>
                     </div>
                 </div>`;
@@ -525,23 +564,17 @@
             const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `bank_leak.json`; a.click();
         }
 
-        // --- NEW: Copy Share Link ---
         function copyShareLink() {
             const rawInput = document.getElementById('inp-omni').value.trim();
             const scope = document.getElementById('search-scope').value;
 
             if (!rawInput) return alert("ابتدا یک جستجو انجام دهید");
-
-            // Construct URL
             const url = new URL(window.location.href);
             url.searchParams.set('q', rawInput);
             url.searchParams.set('scope', scope);
 
-            // Copy
             navigator.clipboard.writeText(url.toString()).then(() => {
                 alert('لینک اشتراک‌گذاری کپی شد:\n' + url.toString());
-            }).catch(err => {
-                console.error('Failed to copy: ', err);
             });
         }
 
