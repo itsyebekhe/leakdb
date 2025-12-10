@@ -1,73 +1,40 @@
-# 👻 Banking OSINT Tool
-### موتور جستجوی داده‌های بانکی (Melli & Mellat)
 
-**GHOST** is a serverless frontend interface designed to query the `yebekhe/bdata` dataset hosted on Hugging Face. It utilizes the **Datasets Server API** to perform SQL-like queries on Parquet files without requiring the user to download the massive database.
+# 👻 Ghost DB Search Dashboard
 
-![Status](https://img.shields.io/badge/Status-Online-green)
-![Database](https://img.shields.io/badge/Database-HuggingFace-yellow)
-![Tech](https://img.shields.io/badge/Tech-HTML5%20%7C%20DuckDB-blue)
+A modern, high-performance web interface for searching encrypted datasets via Cloudflare Workers. Designed with 2025 UI trends, featuring Glassmorphism, dark aesthetics, and full Persian (RTL) support.
 
----
+![UI Preview](https://img.shields.io/badge/UI-Glassmorphism-blueviolet) ![Status](https://img.shields.io/badge/Status-Active-success) ![Language](https://img.shields.io/badge/Lang-Persian_RTL-orange)
 
-## 🚀 Features (امکانات)
+## ✨ Features
 
-*   **🔍 Smart Omni-Search:** Single input field that auto-detects:
-    *   **National Code:** 10-digit validation.
-    *   **Mobile Number:** 09xx format detection.
-    *   **Name:** Persian text normalization.
-*   **⚡ Zero-Download:** Search through millions of records instantly via API. No need to download 2GB+ files.
-*   **📱 Mobile Optimized:** Responsive Bento-grid design with touch-friendly tables.
-*   **🏦 Bank Detection:** Automatically identifies and badges results for **Bank Mellat** vs **Bank Melli**.
-*   **🛠️ Tools:** JSON Export, Clipboard Copy, and Client-side Sorting.
+*   **2025 Design Language:** Deep slate background (`#020617`), ambient lighting effects, and frosted glass cards.
+*   **Zero Dependencies:** Runs entirely in the browser using CDNs. No `npm install` or build steps required.
+*   **Fully Responsive:** Optimized for both mobile devices and desktop screens.
+*   **Smart Search UI:**
+    *   **Scope Selection:** Filter by National Code, Mobile, Name, or All.
+    *   **Live Feedback:** Animated loading states and result cards (Found, Ambiguous, Not Found).
+    *   **Error Handling:** Visual cues for server errors or connection issues.
+*   **Persian Optimized:** Uses the **Vazirmatn** font and full RTL layout.
 
----
+## 🛠 Technologies Used
 
-## 📂 Dataset Information (درباره دیتابیس)
+*   **HTML5 & Vanilla JavaScript** (ES6+)
+*   **[Tailwind CSS](https://tailwindcss.com/)** (via CDN) - For styling and layout.
+*   **[Lucide Icons](https://lucide.dev/)** (via CDN) - For modern, lightweight SVG icons.
+*   **[Vazirmatn Font](https://github.com/rastikerdar/vazirmatn)** - For beautiful Persian typography.
 
-The tool is pre-configured to fetch data from:
+## 🔍 Search Logic
 
-*   **Repository:** `yebekhe/bdata`
-*   **Format:** Apache Parquet
-*   **Columns:** `NATIONAL_CODE`, `FULL_NAME`, `MOBILE`, `FATHER_NAME`, `BANK_ACCOUNT`, `CITY`, `ADDRESS`.
+The dashboard supports the following search inputs:
+*   **Full Name:** Enter full names with spaces (e.g., `Ali Reza`). The backend handles Persian/Arabic character normalization automatically.
+*   **Mobile Number:** Enter full numbers (e.g., `09123456789`).
+*   **National Code:** Enter the 10-digit ID.
 
-> **Note:** If the Hugging Face repository is private or deleted, this search tool will stop working immediately.
+## 🎨 Customization
 
----
-
-## 🛠️ Usage (نحوه استفاده)
-
-### Online Access
-Simply visit the GitHub Pages link associated with this repository.
-
-### Local Development
-1.  Clone this repository.
-2.  Open `index.html` in your browser.
-3.  *Optional:* If you want to change the target dataset, edit these lines in the script:
-
-```javascript
-const HF_DATASET = "yebekhe/bdata"; // Change to your dataset
-const HF_CONFIG = "default";
-const HF_SPLIT = "train";
-```
-
----
-
-## ⚠️ Disclaimer (سلب مسئولیت)
-
-**English:**
-This project is for **Educational and Security Research purposes (OSINT)**.
-1.  This repository contains **only HTML/JS code**. No PII (Personally Identifiable Information) is stored in this GitHub repository.
-2.  The data acts as a public leak from Bank Mellat/Melli and is available on the public internet.
-3.  The developer assumes no responsibility for the misuse of this tool.
-
-**فارسی:**
-این پروژه صرفاً جهت **پژوهش‌های امنیتی و OSINT** منتشر شده است.
-1. این مخزن گیت‌هاب **هیچ‌گونه دیتایی** را میزبانی نمی‌کند و صرفاً یک رابط کاربری (Frontend) است.
-2. دیتابیس متصل شده، مربوط به نشت اطلاعاتی عمومی بانک‌های ملت و ملی می‌باشد.
-3.  مسئولیت قانونی نحوه استفاده از این ابزار تماماً بر عهده کاربر است.
-
----
+*   **Colors:** The theme is built using Tailwind's `indigo` and `slate` palettes. You can change `bg-indigo-600` to `bg-blue-600` or `bg-emerald-600` in the HTML to change the primary color.
+*   **Social Links:** Update the `href` attributes in the footer section to point to your own Telegram or X (Twitter) accounts.
 
 ## 📄 License
 
-[MIT](LICENSE)
+Open Source. Feel free to modify and distribute.
