@@ -1,599 +1,292 @@
-<!DOCTYPE html> 
-<html lang="fa" dir="rtl" class="dark">
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>جستجوی دیتابیس بانکی</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سامانه جستجوی GHOST</title>
+    
+    <!-- Fonts: Vazirmatn -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
     <!-- Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <!-- Fonts -->
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@33.003/misc/Farsi-Digits/Vazirmatn-FD-font-face.css" rel="stylesheet" type="text/css" />
-
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Vazirmatn', 'sans-serif'],
-                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
-                    },
-                    colors: {
-                        brand: { 500: '#ef4444', 600: '#dc2626' }, 
-                        dark: { 900: '#020617', 800: '#0f172a', 700: '#1e293b' }
-                    },
-                    animation: {
-                        'blob': 'blob 10s infinite',
-                        'fade-in': 'fadeIn 0.6s ease-out forwards',
-                    },
-                    keyframes: {
-                        blob: {
-                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
-                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
-                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
-                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
-                        },
-                        fadeIn: {
-                            '0%': { opacity: '0', transform: 'translateY(15px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
-        body { font-family: 'Vazirmatn', sans-serif; background-color: #020617; color: #e2e8f0; }
-        .dir-ltr { direction: ltr; text-align: left; }
-        
-        /* Mobile Tweaks */
-        button, select, input { touch-action: manipulation; font-size: 16px; } 
-        button:active { transform: scale(0.98); }
-        
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #020617; /* Slate 950 */
+            color: #fff;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Ambient Background Glow */
+        .ambient-glow {
+            position: fixed;
+            width: 80vw;
+            height: 80vw;
+            max-width: 600px;
+            max-height: 600px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(2, 6, 23, 0) 70%);
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            pointer-events: none;
+            animation: pulse 10s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        /* Glassmorphism */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 40px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-btn {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Input Focus */
+        .custom-input {
+            background: rgba(2, 6, 23, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+        .custom-input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            outline: none;
+        }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; opacity: 0; transform: translateY(10px); }
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+        /* Social Icons Fill */
+        .social-icon:hover { fill: white; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
 
-    <!-- Header -->
-    <nav class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <div class="bg-red-900/30 border border-red-500/30 p-1.5 rounded-lg text-red-500">
-                        <i class="ri-alert-fill text-xl"></i>
-                    </div>
-                    <span class="font-bold text-lg text-white tracking-wide">LEAKED <span class="text-red-500">DB</span></span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div id="secret-trigger" class="flex items-center gap-2 px-3 py-1 bg-red-950/30 rounded-full border border-red-900/50 select-none cursor-pointer active:scale-95 transition-transform">
-                        <span class="relative flex h-2 w-2">
-                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                          <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                        </span>
-                        <span class="text-[10px] font-mono text-red-400 uppercase">Public Leak</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <div class="ambient-glow"></div>
 
-    <!-- Main Content -->
-    <main class="flex-grow container mx-auto px-4 py-8 max-w-6xl">
+    <main class="w-full max-w-md relative z-10">
         
-        <!-- Search Section -->
-        <div class="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 md:p-8 mb-8 shadow-xl relative overflow-hidden">
-            <div class="text-center mb-8 relative z-10">
-                <h1 class="text-2xl md:text-3xl font-black text-white mb-3 flex items-center justify-center gap-3">
-                    جستجو در دیتابیس‌های <span class="text-red-500">هک شده</span>
-                </h1>
-                <p class="text-slate-400 text-sm">
-                    شامل اطلاعات افشا شده مشتریان بانک ملت و ملی (نام، کدملی، موبایل)
-                </p>
+        <!-- Header -->
+        <div class="text-center mb-8 fade-in" style="animation-delay: 0.1s;">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 mb-4 shadow-lg shadow-indigo-500/20">
+                <i data-lucide="ghost" class="w-8 h-8 text-white"></i>
             </div>
-
-            <div class="max-w-3xl mx-auto relative z-10">
-                <div class="flex flex-col md:flex-row gap-2 bg-slate-900 p-2 rounded-xl border border-slate-700 shadow-sm focus-within:border-red-500/50 transition-colors">
-                    
-                    <!-- Scope Select -->
-                    <div class="relative md:w-48">
-                        <select id="search-scope" class="w-full h-full appearance-none bg-slate-800 text-slate-300 text-sm rounded-lg pl-3 pr-10 py-3 border-none cursor-pointer hover:bg-slate-700">
-                            <option value="ALL">همه فیلدها</option>
-                            <option value="NATIONAL_CODE">کد ملی</option>
-                            <option value="MOBILE">شماره موبایل</option>
-                            <option value="FULL_NAME">نام صاحب حساب</option>
-                        </select>
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
-                            <i class="ri-filter-3-line"></i>
-                        </div>
-                    </div>
-
-                    <!-- Input -->
-                    <div class="flex-grow relative">
-                        <input type="text" id="inp-omni" autocomplete="off" placeholder="جستجو (نام، کدملی یا موبایل)..." 
-                            class="w-full h-full bg-transparent border-none text-white px-4 py-3 placeholder-slate-600 focus:ring-0 text-center md:text-right font-mono">
-                    </div>
-                    
-                    <!-- Button -->
-                    <button onclick="executeSearch(0)" id="btn-search" class="bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg shadow-red-600/20 flex items-center justify-center gap-2 min-w-[120px]">
-                        <span>کاوش</span>
-                        <i class="ri-search-eye-line"></i>
-                    </button>
-                </div>
-                
-                <!-- Disclaimer -->
-                <div class="mt-4 flex flex-col items-center justify-center gap-2 text-[10px] text-red-300/70 bg-red-950/20 py-3 px-4 rounded-lg border border-red-900/30">
-                    <div class="flex items-center gap-2">
-                        <i class="ri-alarm-warning-fill text-base mt-0.5"></i>
-                        <span>هشدار: این اطلاعات مربوط به نشت اطلاعاتی بانک‌ها می‌باشد. مسئولیت استفاده بر عهده کاربر است.</span>
-                    </div>
-                    <div class="text-slate-500">
-                        <i class="ri-lightbulb-flash-line"></i>
-                        نکته: اگر نام کامل پیدا نشد، فقط "نام خانوادگی" را جستجو کنید. سیستم هوشمند ترتیب کلمات را تشخیص می‌دهد.
-                    </div>
-                </div>
-            </div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-white">
+                GHOST <span class="text-indigo-400">DB</span>
+            </h1>
         </div>
 
-        <!-- Results Section -->
-        <div id="results-area" class="hidden animate-fade-in">
-            <div class="flex flex-col md:flex-row justify-between items-end mb-4 gap-4 px-1">
-                <div>
-                    <h2 class="text-lg font-bold text-white flex items-center gap-2">
-                        <i class="ri-file-list-3-line text-red-500"></i>
-                        رکوردها
-                    </h2>
-                    <div class="text-xs text-slate-400 mt-1">تعداد یافته‌ها: <span id="res-count" class="text-white font-mono">0</span></div>
-                </div>
-                
-                <div class="flex gap-2 w-full md:w-auto text-xs">
-                    <!-- NEW: Share Button -->
-                    <button onclick="copyShareLink()" class="flex-1 md:flex-none px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 flex items-center justify-center gap-2" title="کپی لینک جستجو">
-                        <i class="ri-share-forward-line"></i> لینک
-                    </button>
-
-                    <button onclick="copyTable()" class="flex-1 md:flex-none px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 flex items-center justify-center gap-2">
-                        <i class="ri-file-copy-line"></i> کپی
-                    </button>
-                    <button onclick="exportJSON()" class="flex-1 md:flex-none px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 flex items-center justify-center gap-2">
-                        <i class="ri-code-s-slash-line"></i> JSON
-                    </button>
-                </div>
-            </div>
-
-            <!-- VIEW CONTAINER -->
-            <!-- 1. MOBILE CARD VIEW (Visible on small screens) -->
-            <div id="mobile-cards-view" class="md:hidden space-y-4">
-                <!-- Cards injected here -->
-            </div>
-
-            <!-- 2. DESKTOP TABLE VIEW (Visible on medium+ screens) -->
-            <div class="hidden md:block bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-2xl relative">
-                <div class="overflow-x-auto custom-scrollbar max-h-[600px] overflow-y-auto">
-                    <table class="w-full text-left text-sm text-slate-400 whitespace-nowrap">
-                        <thead class="bg-slate-900 text-slate-200 text-xs font-bold sticky-header">
-                            <tr>
-                                <th class="px-4 py-4 text-right">نام صاحب حساب</th>
-                                <th class="px-4 py-4 text-center">کد ملی</th>
-                                <th class="px-4 py-4 text-center">موبایل</th>
-                                <th class="px-4 py-4 text-right">نام پدر</th>
-                                <th class="px-4 py-4 text-center">شهر / استان</th>
-                                <th class="px-4 py-4 text-right min-w-[200px]">آدرس ثبت شده</th>
-                                <th class="px-4 py-4 text-center">بانک عامل</th>
-                            </tr>
-                        </thead>
-                        <tbody id="results-body" class="divide-y divide-slate-700/50">
-                            <!-- JS Injected Rows -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <!-- Search Card -->
+        <div class="glass-card rounded-3xl p-5 mb-5 fade-in" style="animation-delay: 0.2s;">
             
-            <!-- Pagination Footer (Shared) -->
-            <div class="mt-4 md:mt-0 md:rounded-b-xl md:border-x md:border-b border border-slate-700 bg-slate-900/50 p-4 rounded-xl flex justify-between items-center">
-                <button onclick="changePage(-1)" id="btn-prev" disabled class="px-4 py-2 bg-slate-800 rounded-lg text-xs text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 flex items-center gap-2">
-                    <i class="ri-arrow-right-s-line"></i> قبلی
-                </button>
-                <span id="page-info" class="text-xs font-mono text-slate-400 dir-ltr">Page 1</span>
-                <button onclick="changePage(1)" id="btn-next" disabled class="px-4 py-2 bg-slate-800 rounded-lg text-xs text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-700 flex items-center gap-2">
-                    بعدی <i class="ri-arrow-left-s-line"></i>
-                </button>
+            <!-- Scope Selector -->
+            <div class="flex bg-black/20 p-1 rounded-xl mb-4">
+                <button onclick="setScope('ALL', this)" class="scope-btn flex-1 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white shadow transition-all">همه</button>
+                <button onclick="setScope('NATIONAL_CODE', this)" class="scope-btn flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition-all">کد ملی</button>
+                <button onclick="setScope('MOBILE', this)" class="scope-btn flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition-all">موبایل</button>
+                <button onclick="setScope('FULL_NAME', this)" class="scope-btn flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition-all">نام</button>
             </div>
 
+            <!-- Input -->
+            <div class="relative mb-4 group">
+                <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                    <i data-lucide="search" class="w-5 h-5 text-slate-500 group-focus-within:text-indigo-400 transition-colors"></i>
+                </div>
+                <input type="text" id="searchInput" 
+                    class="custom-input w-full pr-12 pl-4 py-3.5 rounded-xl text-white placeholder-slate-600 font-medium" 
+                    placeholder="جستجو (نام، شماره، کد ملی)...">
+            </div>
+
+            <!-- Button -->
+            <button onclick="performSearch()" id="searchBtn"
+                class="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                <span>جستجو</span>
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+            </button>
         </div>
 
-        <!-- Status / Loading -->
-        <div id="status-display" class="hidden py-16 text-center">
-            <!-- Dynamic -->
+        <!-- Results Area -->
+        <div id="resultsArea" class="hidden mb-5"></div>
+
+        <!-- Tips Card -->
+        <div class="glass-card rounded-2xl p-5 mb-8 fade-in" style="animation-delay: 0.3s;">
+            <div class="flex items-center gap-2 mb-3 text-indigo-300">
+                <i data-lucide="lightbulb" class="w-5 h-5"></i>
+                <h3 class="font-bold text-sm">نکات جستجوی هوشمند</h3>
+            </div>
+            <ul class="space-y-2 text-xs text-slate-400 leading-relaxed">
+                <li class="flex items-start gap-2">
+                    <span class="mt-1.5 w-1 h-1 rounded-full bg-indigo-500 flex-shrink-0"></span>
+                    <span>برای جستجوی نام، <b>نام و نام خانوادگی</b> را کامل و با فاصله وارد کنید (مثال: علی رضایی).</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="mt-1.5 w-1 h-1 rounded-full bg-indigo-500 flex-shrink-0"></span>
+                    <span>شماره موبایل را بدون فاصله و کامل وارد کنید.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                    <span class="mt-1.5 w-1 h-1 rounded-full bg-indigo-500 flex-shrink-0"></span>
+                    <span>سیستم به صورت خودکار حروف فارسی/عربی (ی/ي - ک/ك) را تشخیص می‌دهد.</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Social Links -->
+        <div class="flex justify-center gap-4 fade-in" style="animation-delay: 0.4s;">
+            
+            <!-- X (Twitter) -->
+            <a href="https://x.com/yebekhe" target="_blank" class="glass-btn w-12 h-12 rounded-2xl flex items-center justify-center group">
+                <svg viewBox="0 0 24 24" class="w-5 h-5 fill-slate-400 group-hover:fill-white transition-colors" xmlns="http://www.w3.org/2000/svg"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+
+            <!-- Telegram Channel -->
+            <a href="https://t.me/yebekhe" target="_blank" class="glass-btn w-12 h-12 rounded-2xl flex items-center justify-center group">
+                <svg viewBox="0 0 24 24" class="w-5 h-5 fill-slate-400 group-hover:fill-blue-400 transition-colors" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.701h-.002l.002.001-.314 4.692c.46 0 .663-.211.921-.46l2.211-2.15 4.599 3.397c.848.467 1.457.227 1.668-.785l3.019-14.228c.309-1.239-.473-1.8-1.282-1.434z"/>
+                </svg>
+            </a>
+
+            <!-- Telegram Bot -->
+            <a href="https://t.me/TheGhostDB_Bot" target="_blank" class="glass-btn w-12 h-12 rounded-2xl flex items-center justify-center group">
+                <i data-lucide="bot" class="w-6 h-6 text-slate-400 group-hover:text-emerald-400 transition-colors"></i>
+            </a>
+
         </div>
 
     </main>
-    
+
     <script>
-        // CONFIG
-        const HF_DATASET = "yebekhe/bdata";
-        const HF_CONFIG = "default";
-        const HF_SPLIT = "train";
-        const HF_LENGTH = 50; 
-        const CITY_CODES = {"169":"آذرشهر","170":"اسکو","149":"اهر","150":"اهر","171":"بستان‌آباد","168":"بناب","136":"تبریز","137":"تبریز","138":"تبریز","545":"ترکمانچای","505":"جلفا","636":"چاراویماق","164":"سراب","165":"سراب","172":"شبستر","623":"صوفیان","506":"عجب‌شیر","519":"کلیبر","154":"مراغه","155":"مراغه","567":"ورزقان","173":"هریس","159":"هشترود","160":"هشترود","604":"هوراند","274":"ارومیه","275":"ارومیه","295":"اشنویه","637":"انزل","292":"بوکان","492":"پلدشت","289":"پیرانشهر","677":"تخت سلیمان","294":"تکاب","493":"چایپاره","279":"خوی","280":"خوی","288":"سردشت","284":"سلماس","285":"سلماس","638":"سیلوانه","291":"سیه‌چشمه","640":"شوط","293":"شاهین‌دژ","675":"کشاورز","282":"ماکو","283":"ماکو","286":"مهاباد","287":"مهاباد","296":"میاندوآب","297":"میاندوآب","290":"نقده","400":"اسدآباد","401":"اسدآباد","404":"بهار","405":"بهار","397":"تویسرکان","398":"رزن","399":"رزن","647":"شراء","502":"فامنین","584":"قلقل رود","402":"کبودرآهنگ","403":"کبودرآهنگ","392":"ملایر","393":"ملایر","395":"نهاوند","396":"نهاوند","386":"همدان","387":"همدان","503":"ابرکوه","444":"اردکان","551":"اشکذر","447":"بافق","561":"بهاباد","445":"تفت","718":"دستگردان","083":"طبس","446":"مهریز","448":"میبد","552":"نیر","543":"هرات","442":"یزد","443":"یزد","051":"آشتیان","052":"اراک","053":"اراک","058":"تفرش","055":"خمین","617":"خنداب","057":"دلیجان","618":"زرند مرکزی","059":"ساوه","060":"ساوه","061":"سربند","062":"سربند","544":"فراهان","056":"محلات","571":"وفس","593":"هندودر","667":"ابوموسی","348":"بستک","586":"بشاگرد","338":"بندرعباس","339":"بندرعباس","343":"بندرلنگه","344":"بندرلنگه","346":"جاسک","337":"حاجی‌آباد","554":"خمیر","469":"رودان","537":"فین","345":"قشم","470":"گاوبندی","341":"میناب","342":"میناب","483":"ازنا","484":"ازنا","557":"اشترینان","418":"الشتر","416":"الیگودرز","417":"الیگودرز","412":"بروجرد","413":"بروجرد","592":"پاپی","612":"چغلوندی","613":"چگنی","406":"خرم‌آباد","407":"خرم‌آباد","421":"دورود","598":"رومشکان","419":"کوهدشت","385":"ملاوی","420":"نورآباد","528":"ویسیان","213":"آمل","214":"آمل","205":"بابل","206":"بابل","498":"بابلسر","568":"بندپی","711":"بندپی شرقی","217":"بهشهر","218":"بهشهر","221":"تنکابن","582":"جویبار","483":"چالوس","625":"چمستان","576":"چهاردانگه","578":"دودانگه","227":"رامسر","208":"ساری","209":"ساری","225":"سوادکوه","577":"شیرگاه","712":"عباس‌آباد","215":"قائمشهر","216":"قائمشهر","626":"کجور","627":"کلاردشت","579":"گلوگاه","713":"میاندورود","499":"نکا","222":"نور","219":"نوشهر","220":"نوشهر","500":"هراز","501":"هراز","623":"آزادشهر","497":"آق‌قلا","223":"بندرترکمن","689":"بندرگز","487":"رامیان","226":"علی‌آباد","224":"کردکوی","486":"کلاله","211":"گرگان","212":"گرگان","628":"گمیشان","202":"گنبد کاووس","203":"گنبد کاووس","531":"مراوه‌تپه","488":"مینودشت","001":"تهران","002":"تهران","003":"تهران","004":"تهران","005":"تهران","006":"تهران","007":"تهران","008":"تهران","011":"تهران جنوب","020":"تهران شرق","025":"تهران شمال","015":"تهران غرب","043":"دماوند","666":"رباط کریم","489":"ساوجبلاغ","044":"شمیران","045":"شمیران","048":"شهرری","049":"شهرری","490":"شهریار","491":"شهریار","695":"طالقان","659":"فیروزکوه","031":"کرج","032":"کرج","664":"کهریزک","717":"نظرآباد","041":"ورامین","042":"ورامین","427":"زنجان","428":"زنجان","507":"ملکان","158":"مرند","615":"ابهر","152":"میانه","153":"میانه","333":"اسلام‌آباد","334":"اسلام‌آباد","691":"باینگان","322":"پاوه","323":"پاوه","595":"ثلاث باباجانی","395":"جوانرود","641":"حمیل","596":"روانسر","336":"سرپل ذهاب","335":"سنقر","496":"صحنه","337":"قصرشیرین","324":"کرمانشاه","325":"کرمانشاه","394":"کرند","330":"کنگاور","332":"گیلانغرب","331":"هرسین","127":"اصفهان","128":"اصفهان","129":"اصفهان","108":"نجف‌آباد","109":"نجف‌آباد","125":"کاشان","126":"کاشان","121":"گلپایگان","119":"شهرضا","113":"خمینی‌شهر","114":"خمینی‌شهر","110":"فلاورجان","111":"فلاورجان","118":"اردستان","124":"نائین","510":"شاهین‌شهر","511":"شاهین‌شهر","112":"فریدونشهر","115":"فریدن","541":"مبارکه","122":"خوانسار","116":"لنجان","117":"لنجان"};
+        // ================= CONFIGURATION =================
+        // 🔴 PASTE YOUR CLOUDFLARE WORKER URL HERE
+        const WORKER_URL = "https://sheethole.yebekhe.workers.dev/"; 
+        // ===============================================
 
-        // UTILS
-        const toEnglishDigits = (str) => { if (!str) return ""; return String(str).replace(/[۰-۹]/g, w => ['0','1','2','3','4','5','6','7','8','9'][['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'].indexOf(w)]); };
-        
-        const normalizePersian = (text) => { 
-            if (!text) return ""; 
-            return text.replace(/ي/g, "ی").replace(/ك/g, "ک").replace(/ى/g, "ی").trim(); 
-        };
+        let currentScope = 'ALL';
+        lucide.createIcons();
 
-        const copyToClip = (txt) => { navigator.clipboard.writeText(txt); alert('کپی شد: ' + txt); };
-        
-        function processNationalCode(code) {
-            if (!code || typeof code !== 'string' && typeof code !== 'number') return { code: '-', city: '' };
-            const numCode = parseInt(String(code).trim(), 10);
-            const cleanCode = String(numCode).padStart(10, '0');
-            const prefix = cleanCode.substring(0, 3);
-            return { code: cleanCode, city: CITY_CODES[prefix] || "" };
+        function setScope(scope, btn) {
+            currentScope = scope;
+            document.querySelectorAll('.scope-btn').forEach(b => {
+                b.className = "scope-btn flex-1 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition-all";
+            });
+            btn.className = "scope-btn flex-1 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white shadow transition-all";
         }
 
-        // STATE
-        let lastResults = [];
-        let currentSearchPage = 0;
-        let totalSearchResults = 0;
-        let activeQueryString = "";
-        
-        
-        let isRevealed = false; 
+        async function performSearch() {
+            const input = document.getElementById('searchInput').value.trim();
+            const btn = document.getElementById('searchBtn');
+            const resultDiv = document.getElementById('resultsArea');
 
-        const triggerBtn = document.getElementById('secret-trigger');
-        let pressTimer;
-
-        triggerBtn.addEventListener('touchstart', (e) => {
-            pressTimer = setTimeout(() => {
-                if (navigator.vibrate) navigator.vibrate(50);
-                toggleReveal();
-            }, 1000);
-        });
-
-        triggerBtn.addEventListener('touchend', () => clearTimeout(pressTimer));
-        triggerBtn.addEventListener('touchcancel', () => clearTimeout(pressTimer));
-        
-        triggerBtn.addEventListener('mousedown', () => {
-            pressTimer = setTimeout(() => {
-                toggleReveal();
-            }, 1000); 
-        });
-        triggerBtn.addEventListener('mouseup', () => clearTimeout(pressTimer));
-        triggerBtn.addEventListener('mouseleave', () => clearTimeout(pressTimer));
-
-        function toggleReveal() {
-            isRevealed = !isRevealed;
-            const nav = document.querySelector('nav div div div:last-child');
-            
-            let badge = document.getElementById('unlock-badge');
-            if(isRevealed) {
-                if(!badge) {
-                    const b = document.createElement('div');
-                    b.id = 'unlock-badge';
-                    b.className = 'flex items-center gap-2 px-3 py-1 bg-brand-600/20 rounded-full border border-brand-500/50 ml-2 animate-pulse';
-                    b.innerHTML = `<i class="ri-lock-unlock-fill text-brand-500"></i><span class="text-[10px] font-mono text-brand-500 font-bold uppercase"></span>`;
-                    nav.prepend(b);
-                }
-            } else {
-                if(badge) badge.remove();
-            }
-
-            if(lastResults.length > 0) {
-                renderResults(lastResults, totalSearchResults);
-            }
-        }
-
-        const omniInput = document.getElementById('inp-omni');
-        omniInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') executeSearch(0); });
-
-        async function executeSearch(page = 0) {
-            const rawInput = document.getElementById('inp-omni').value;
-            const scope = document.getElementById('search-scope').value;
-            const input = normalizePersian(toEnglishDigits(rawInput));
-            
-            if (!input || input.length < 2) return alert("لطفا حداقل ۲ کاراکتر وارد کنید");
-
-            setLoading(true);
-            currentSearchPage = page;
-
-            try {
-                if (page === 0) {
-                    let conditions = [];
-
-                    if (scope === 'ALL' || scope === 'NATIONAL_CODE') {
-                        if (/^\d+$/.test(input)) {
-                            conditions.push(`NATIONAL_CODE LIKE '%${input}%'`);
-                            if(!input.startsWith('0')) conditions.push(`NATIONAL_CODE = '${input}'`);
-                        }
-                    }
-
-                    if (scope === 'ALL' || scope === 'MOBILE') {
-                        if (/^\d+$/.test(input)) conditions.push(`MOBILE LIKE '%${input}%'`);
-                    }
-
-                    if (scope === 'ALL' || scope === 'FULL_NAME') {
-                        const nameParts = input.split(/\s+/).filter(part => part.length > 0);
-                        if (nameParts.length > 0) {
-                            const tokenizedNameQuery = nameParts.map(part => `FULL_NAME LIKE '%${part}%'`).join(' AND ');
-                            if (scope === 'ALL') {
-                                const tokenizedFatherQuery = nameParts.map(part => `FATHER_NAME LIKE '%${part}%'`).join(' AND ');
-                                conditions.push(`(${tokenizedNameQuery})`);
-                                conditions.push(`(${tokenizedFatherQuery})`);
-                            } else {
-                                conditions.push(`(${tokenizedNameQuery})`);
-                            }
-                        }
-                    }
-                    
-                    if (conditions.length === 0) conditions.push(`FULL_NAME LIKE '%${input}%'`); 
-                    activeQueryString = conditions.join(" OR ");
-                }
-
-                const offset = page * HF_LENGTH;
-                const url = `https://datasets-server.huggingface.co/filter?dataset=${HF_DATASET}&config=${HF_CONFIG}&split=${HF_SPLIT}&where=${encodeURIComponent(activeQueryString)}&offset=${offset}&length=${HF_LENGTH}`;
-
-                // Retry Logic
-                let response;
-                let json;
-                let attempts = 0;
-                const maxAttempts = 10;
-
-                while (attempts < maxAttempts) {
-                    try {
-                        attempts++;
-                        response = await fetch(url);
-                        try { json = await response.json(); } catch(e) { throw new Error(`Server Error: ${response.status}`); }
-                        if (json.error && json.error.includes("Unexpected error")) {
-                            if (attempts < maxAttempts) { await new Promise(r => setTimeout(r, 1500)); continue; }
-                            else throw new Error("سرور پاسخگو نیست. لطفا مجدد تلاش کنید.");
-                        }
-                        if (!response.ok) throw new Error(json.error || `HTTP Error ${response.status}`);
-                        break; 
-                    } catch (err) {
-                        if (attempts === maxAttempts) throw err;
-                        await new Promise(r => setTimeout(r, 1500));
-                    }
-                }
-                
-                renderResults(json.rows.map(r => r.row), json.num_rows_total);
-
-            } catch (error) {
-                console.error(error);
-                showErrorState(error.message);
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        function renderResults(rows, totalRows) {
-            lastResults = rows;
-            totalSearchResults = totalRows;
-
-            const container = document.getElementById('results-area');
-            const tbody = document.getElementById('results-body');
-            const mobileCardsContainer = document.getElementById('mobile-cards-view');
-            const status = document.getElementById('status-display');
-            const countLabel = document.getElementById('res-count');
-
-            if (!rows || rows.length === 0) {
-                container.classList.add('hidden');
-                status.innerHTML = `<div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-800 text-slate-500 mb-4"><i class="ri-search-eye-line text-3xl"></i></div><p class="text-slate-400 font-bold">موردی یافت نشد</p>`;
-                status.classList.remove('hidden');
+            if (input.length < 2) {
+                // Shake animation for error
+                document.getElementById('searchInput').classList.add('ring-2', 'ring-red-500');
+                setTimeout(() => document.getElementById('searchInput').classList.remove('ring-2', 'ring-red-500'), 500);
                 return;
             }
 
-            status.classList.add('hidden');
-            container.classList.remove('hidden');
-            countLabel.innerText = totalRows.toLocaleString('fa-IR');
+            btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>`;
+            lucide.createIcons();
+            resultDiv.innerHTML = '';
+            resultDiv.classList.remove('hidden');
+
+            try {
+                const url = `${WORKER_URL}?q=${encodeURIComponent(input)}&scope=${currentScope}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                renderResult(data);
+            } catch (error) {
+                renderError();
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span>جستجو</span><i data-lucide="arrow-left" class="w-4 h-4"></i>`;
+                lucide.createIcons();
+            }
+        }
+
+        function renderResult(data) {
+            const container = document.getElementById('resultsArea');
+            let html = '';
             
-            tbody.innerHTML = "";
-            mobileCardsContainer.innerHTML = "";
-
-            // --- MASKING HELPERS ---
-            const maskSensitive = (str, start, end) => {
-                if(isRevealed) return str;
-                if(!str || str.length < 5) return str; 
-                const s = String(str);
-                return s.substring(0, start) + '•'.repeat(s.length - (start + end)) + s.substring(s.length - end);
-            };
-
-            const maskAddress = (addr) => {
-                if(isRevealed) return addr;
-                if (!addr || addr.length < 5) return '-';
-                if (addr.length < 15) return addr; 
-                return addr.substring(0, 25) + '... (محفوظ)';
-            };
-
-            rows.forEach(row => {
-                const sanitize = (val) => {
-                    if (!val) return '-';
-                    const str = String(val).replace(/none/gi, '').trim();
-                    return str.length > 0 ? str : '-';
-                };
-
-                const rName = sanitize(row.FULL_NAME || row.full_name);
-                const rawCode = sanitize(row.NATIONAL_CODE || row.national_code);
-                const rawMob = sanitize(row.MOBILE || row.mobile);
-                const rawAddr = sanitize(row.ADDRESS || row.address);
-                
-                const displayCode = maskSensitive(rawCode, 3, 2); 
-                const displayMob = maskSensitive(rawMob, 4, 3);   
-                const displayAddr = maskAddress(rawAddr);         
-
-                const rFather = sanitize(row.FATHER_NAME || row.father);
-                const rCity = sanitize(row.CITY_NAME || row.city);
-                const rBank = sanitize(row.BANK_ACCOUNT || row.bank);
-
-                let rBankName = rBank;
-                let bankClass = "bg-slate-700 text-slate-300";
-                if (rBank.includes("MELLAT")) { rBankName = "بانک ملی"; bankClass = "bg-blue-900/30 text-blue-400 border border-blue-500/30"; } 
-                else if (rBank.includes("MELLI")) { rBankName = "بانک ملت"; bankClass = "bg-red-900/30 text-red-400 border border-red-500/30"; } 
-                else if (rBank === "BOTH") { rBankName = "مشترک"; bankClass = "bg-purple-900/30 text-purple-400 border border-purple-500/30"; }
-
-                const ncData = processNationalCode(rawCode); 
-                const cityBadge = ncData.city ? `<span class="mr-1 text-[10px] bg-slate-700 px-1.5 rounded text-slate-300 border border-slate-600">${ncData.city}</span>` : '';
-
-                // 1. Desktop Row 
-                tbody.innerHTML += `
-                <tr class="hover:bg-slate-700/30 transition-colors border-b border-slate-700/50 last:border-0">
-                    <td class="px-4 py-4 text-right font-bold text-white whitespace-normal min-w-[140px]" dir="rtl">${rName}</td>
-                    <td class="px-4 py-4 text-center" dir="ltr">
-                        <div class="font-mono text-slate-300 tracking-wider select-all" title="${isRevealed ? '' : 'Hold me hard :)'}">${displayCode}</div>
-                        ${cityBadge ? `<div dir="rtl" class="inline-block mt-1">${cityBadge}</div>` : ''}
-                    </td>
-                    <td class="px-4 py-4 text-center font-mono text-slate-300 tracking-wider select-all" dir="ltr" title="${isRevealed ? '' : 'Hold me hard :)'}">${displayMob}</td>
-                    <td class="px-4 py-4 text-right text-xs text-slate-400" dir="rtl">${rFather}</td>
-                    <td class="px-4 py-4 text-center text-xs text-slate-500" dir="rtl">${rCity}</td>
-                    <td class="px-4 py-4 text-right text-xs text-slate-500 truncate max-w-[200px]" title="${isRevealed ? '' : 'Hold me hard :)'}" dir="rtl">${displayAddr}</td>
-                    <td class="px-4 py-4 text-center text-xs">
-                        <span class="px-2 py-1 rounded font-bold ${bankClass}">${rBankName}</span>
-                    </td>
-                </tr>`;
-
-                // 2. Mobile Card
-                const mobileCard = `
-                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg relative overflow-hidden">
-                    <div class="absolute top-0 left-0 px-3 py-1.5 rounded-br-lg text-[10px] font-bold ${bankClass}">
-                        ${rBankName}
-                    </div>
-                    <div class="mt-5 mb-4 text-right" dir="rtl">
-                        <h3 class="text-white font-bold text-lg leading-tight select-all">${rName}</h3>
-                        <p class="text-slate-500 text-xs mt-1 flex items-center gap-1">
-                            <i class="ri-user-smile-line"></i> فرزند: ${rFather}
-                        </p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-slate-900/50 p-2.5 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center">
-                            <span class="text-[10px] text-slate-500 mb-1">شماره موبایل</span>
-                            <span class="font-mono text-slate-200 tracking-widest text-sm select-all" dir="ltr">${displayMob}</span>
-                        </div>
-                        <div class="bg-slate-900/50 p-2.5 rounded-lg border border-slate-700/50 flex flex-col items-center justify-center">
-                            <span class="text-[10px] text-slate-500 mb-1">کد ملی</span>
-                            <div class="flex flex-col items-center">
-                                <span class="font-mono text-slate-200 tracking-widest text-sm select-all" dir="ltr">${displayCode}</span>
-                                ${ncData.city ? `<span class="text-[9px] text-slate-400 mt-0.5" dir="rtl">${ncData.city}</span>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="pt-3 border-t border-slate-700/50 flex items-start gap-2" dir="rtl">
-                        <i class="ri-map-pin-line text-slate-500 mt-0.5 text-xs"></i>
-                        <div class="flex-1 min-w-0">
-                             <div class="flex items-center justify-between mb-1">
-                                <span class="text-xs text-slate-500">آدرس ثبت شده:</span>
-                                <span class="text-[10px] bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded">${rCity}</span>
-                             </div>
-                             <p class="text-xs text-slate-400 leading-relaxed break-words">${displayAddr}</p>
+            if (data.status === 'found') {
+                html = `
+                <div class="glass-card rounded-2xl p-5 border-l-4 border-emerald-500 fade-in">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-emerald-500/10 rounded-lg text-emerald-400"><i data-lucide="check-circle-2" class="w-6 h-6"></i></div>
+                        <div>
+                            <h3 class="font-bold text-white text-sm">رکورد موجود است</h3>
+                            <p class="text-slate-400 text-xs mt-0.5">اطلاعات در پایگاه داده یافت شد.</p>
                         </div>
                     </div>
                 </div>`;
-                
-                mobileCardsContainer.innerHTML += mobileCard;
-            });
-
-            updatePaginationUI();
-        }
-
-        function updatePaginationUI() {
-            const btnPrev = document.getElementById('btn-prev');
-            const btnNext = document.getElementById('btn-next');
-            const pageInfo = document.getElementById('page-info');
-            const totalPages = Math.ceil(totalSearchResults / HF_LENGTH);
-            const displayPage = currentSearchPage + 1;
-
-            pageInfo.innerText = `${displayPage.toLocaleString('fa-IR')} / ${totalPages.toLocaleString('fa-IR')}`;
-            btnPrev.disabled = currentSearchPage === 0;
-            btnNext.disabled = displayPage >= totalPages;
-        }
-
-        function changePage(dir) {
-            const newPage = currentSearchPage + dir;
-            if (newPage >= 0) {
-                executeSearch(newPage);
-                document.getElementById('results-area').scrollIntoView({behavior: 'smooth'});
-            }
-        }
-
-        function showErrorState(msg) {
-            const container = document.getElementById('results-area');
-            const status = document.getElementById('status-display');
-            container.classList.add('hidden');
-            status.innerHTML = `<p class="text-red-400 font-bold text-sm">خطا: ${msg}</p>`;
-            status.classList.remove('hidden');
-        }
-
-        function setLoading(isLoading) {
-            const btn = document.getElementById('btn-search');
-            const status = document.getElementById('status-display');
-            const results = document.getElementById('results-area');
-            
-            if (isLoading) {
-                btn.disabled = true;
-                btn.innerHTML = `<i class="ri-loader-4-line animate-spin text-xl"></i>`;
-                if(currentSearchPage === 0) results.classList.add('hidden');
-                status.classList.remove('hidden');
-                status.innerHTML = `<div class="loader mx-auto mb-2 border-t-red-500"></div><p class="text-slate-500 text-xs animate-pulse">جستجو...</p>`;
+            } else if (data.status === 'ambiguous') {
+                html = `
+                <div class="glass-card rounded-2xl p-5 border-l-4 border-amber-500 fade-in">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-amber-500/10 rounded-lg text-amber-400"><i data-lucide="users" class="w-6 h-6"></i></div>
+                        <div>
+                            <h3 class="font-bold text-white text-sm">نتایج متعدد</h3>
+                            <p class="text-slate-400 text-xs mt-0.5">لطفا جستجوی دقیق‌تری انجام دهید.</p>
+                        </div>
+                    </div>
+                </div>`;
             } else {
-                btn.disabled = false;
-                btn.innerHTML = `<span class="md:hidden">جستجو</span><i class="ri-search-2-line text-xl"></i>`;
+                html = `
+                <div class="glass-card rounded-2xl p-5 border-l-4 border-rose-500 fade-in">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-rose-500/10 rounded-lg text-rose-400"><i data-lucide="x-circle" class="w-6 h-6"></i></div>
+                        <div>
+                            <h3 class="font-bold text-white text-sm">یافت نشد</h3>
+                            <p class="text-slate-400 text-xs mt-0.5">هیچ موردی با این مشخصات پیدا نشد.</p>
+                        </div>
+                    </div>
+                </div>`;
             }
+            container.innerHTML = html;
+            lucide.createIcons();
         }
 
-        function copyTable() {
-            if(lastResults.length === 0) return;
-            let txt = "نام\tکدملی\tموبایل\n";
-            lastResults.forEach(r => txt += `${r.FULL_NAME}\t${r.NATIONAL_CODE}\t${r.MOBILE}\n`);
-            navigator.clipboard.writeText(txt);
-            alert("کپی شد");
+        function renderError() {
+            const container = document.getElementById('resultsArea');
+            container.innerHTML = `
+                <div class="glass-card rounded-2xl p-5 border-l-4 border-slate-500 fade-in">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-slate-500/10 rounded-lg text-slate-400"><i data-lucide="wifi-off" class="w-6 h-6"></i></div>
+                        <div>
+                            <h3 class="font-bold text-white text-sm">خطای ارتباط</h3>
+                            <p class="text-slate-400 text-xs mt-0.5">لطفا اتصال اینترنت خود را بررسی کنید.</p>
+                        </div>
+                    </div>
+                </div>`;
+            lucide.createIcons();
         }
 
-        function exportJSON() {
-            if(lastResults.length === 0) return;
-            const blob = new Blob([JSON.stringify(lastResults, null, 2)], {type: 'application/json'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `bank_leak.json`; a.click();
-        }
-
-        function copyShareLink() {
-            const rawInput = document.getElementById('inp-omni').value.trim();
-            const scope = document.getElementById('search-scope').value;
-
-            if (!rawInput) return alert("ابتدا یک جستجو انجام دهید");
-            const url = new URL(window.location.href);
-            url.searchParams.set('q', rawInput);
-            url.searchParams.set('scope', scope);
-
-            navigator.clipboard.writeText(url.toString()).then(() => {
-                alert('لینک اشتراک‌گذاری کپی شد:\n' + url.toString());
-            });
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const query = urlParams.get('q'); 
-            const scope = urlParams.get('scope'); 
-
-            if (scope) {
-                const scopeSelect = document.getElementById('search-scope');
-                if (scopeSelect.querySelector(`option[value="${scope}"]`)) {
-                    scopeSelect.value = scope;
-                }
-            }
-
-            if (query) {
-                document.getElementById('inp-omni').value = query;
-                executeSearch(0);
-            }
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') performSearch();
         });
     </script>
 </body>
